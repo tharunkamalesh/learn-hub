@@ -32,6 +32,7 @@ const Navbar: React.FC = () => {
     : [
         { href: '/dashboard', label: 'Dashboard', icon: BookOpen },
         { href: '/courses', label: 'Courses', icon: BookOpen },
+        { href: '/guides', label: 'Guides', icon: BookOpen },
         { href: '/results', label: 'My Results', icon: BarChart3 },
       ];
 
@@ -138,6 +139,20 @@ const Navbar: React.FC = () => {
                 {link.label}
               </Link>
             ))}
+            {!isAdmin && (
+              <Link
+                to="/guides"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                  isActiveLink('/guides')
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                Guides
+              </Link>
+            )}
           </div>
         )}
       </div>

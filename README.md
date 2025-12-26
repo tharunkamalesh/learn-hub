@@ -1,4 +1,6 @@
-# Welcome to your Lovable project
+# Learning Hub - Frontend
+
+A React frontend for the Learning Management System (LMS) that connects to a Node.js backend.
 
 ## Project info
 
@@ -35,6 +37,21 @@ npm i
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
+
+## Connecting to Backend API
+
+To connect this frontend to your Node.js backend:
+
+1. Make sure your backend server is running (typically on http://localhost:5000)
+2. Create a `.env` file in the root of this frontend project with the following content:
+
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+3. Restart the frontend development server after making changes to `.env` file
+
+The frontend is now configured to make API calls to your backend server.
 
 **Edit a file directly in GitHub**
 

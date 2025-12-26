@@ -75,7 +75,7 @@ const Auth: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const response = await signup(signupData.email, signupData.password, signupData.name);
+      const response = await signup(signupData.name, signupData.email, signupData.password);
       if (response.success) {
         toast({ title: 'Account created!', description: 'Welcome to LearnHub.' });
         navigate('/dashboard');

@@ -77,41 +77,30 @@ export const authApi = {
    * POST /api/auth/signup
    */
   async signup(data: SignupRequest): Promise<AuthResponse> {
-    await delay(500);
+    const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: data.name,
+        email: data.email,
+        password: data.password
+      }),
+    });
+    const result = await response.json();
+    if (result.token) setToken(result.token);
     
-    // Mock implementation
-    const existingUser = mockUsers.find(u => u.email === data.email);
-    if (existingUser) {
-      return { success: false, message: 'Email already registered' };
+    // Map backend user response to frontend User type
+    if (result.user) {
+      result.user = {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.username, // Map username to name
+        role: result.user.role,
+        createdAt: result.user.createdAt || new Date().toISOString()
+      };
     }
     
-    const newUser: User = {
-      id: `user-${Date.now()}`,
-      email: data.email,
-      name: data.name,
-      role: 'student',
-      createdAt: new Date().toISOString(),
-    };
-    
-    const token = `mock-jwt-token-${newUser.id}`;
-    setToken(token);
-    
-    return {
-      success: true,
-      message: 'Account created successfully',
-      token,
-      user: newUser,
-    };
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/auth/signup`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data),
-    // });
-    // const result = await response.json();
-    // if (result.success && result.token) setToken(result.token);
-    // return result;
+    return result;
   },
 
   /**
@@ -119,35 +108,26 @@ export const authApi = {
    * POST /api/auth/login
    */
   async login(data: LoginRequest): Promise<AuthResponse> {
-    await delay(500);
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    if (result.token) setToken(result.token);
     
-    // Mock implementation
-    const user = mockUsers.find(u => u.email === data.email);
-    
-    // For demo: password check (any non-empty password works)
-    if (!user || !data.password) {
-      return { success: false, message: 'Invalid email or password' };
+    // Map backend user response to frontend User type
+    if (result.user) {
+      result.user = {
+        id: result.user.id,
+        email: result.user.email,
+        name: result.user.username, // Map username to name
+        role: result.user.role,
+        createdAt: result.user.createdAt || new Date().toISOString()
+      };
     }
     
-    const token = `mock-jwt-token-${user.id}`;
-    setToken(token);
-    
-    return {
-      success: true,
-      message: 'Login successful',
-      token,
-      user,
-    };
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/auth/login`, {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(data),
-    // });
-    // const result = await response.json();
-    // if (result.success && result.token) setToken(result.token);
-    // return result;
+    return result;
   },
 
   /**
@@ -163,19 +143,23 @@ export const authApi = {
   async getCurrentUser(): Promise<User | null> {
     if (!authToken) return null;
     
-    await delay(200);
-    
-    // Mock: extract user ID from token
-    const userId = authToken.replace('mock-jwt-token-', '');
-    return mockUsers.find(u => u.id === userId) || null;
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    //   headers: getAuthHeaders(),
-    // });
-    // if (!response.ok) return null;
-    // const result = await response.json();
-    // return result.data;
+    // Since backend doesn't have a /auth/me endpoint, we'll decode the token to get user info
+    try {
+      // Decode JWT token to extract user info
+      const tokenPayload = authToken.split('.')[1];
+      const decodedPayload = JSON.parse(atob(tokenPayload));
+      
+      return {
+        id: decodedPayload.id,
+        email: decodedPayload.email,
+        name: decodedPayload.name || decodedPayload.username,
+        role: decodedPayload.role,
+        createdAt: decodedPayload.createdAt || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
   },
 };
 
@@ -189,15 +173,12 @@ export const courseApi = {
    * GET /api/courses
    */
   async getCourses(): Promise<Course[]> {
-    await delay(300);
-    return mockCourses;
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/courses`, {
-    //   headers: getAuthHeaders(),
-    // });
-    // const result = await response.json();
-    // return result.data;
+    const response = await fetch(`${API_BASE_URL}/courses`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await response.json();
+    // Backend returns courses array directly in result.courses
+    return result.courses || result.data || [];
   },
 
   /**
@@ -205,15 +186,12 @@ export const courseApi = {
    * GET /api/courses/:id
    */
   async getCourseById(id: string): Promise<Course | null> {
-    await delay(200);
-    return mockCourses.find(c => c.id === id) || null;
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
-    //   headers: getAuthHeaders(),
-    // });
-    // const result = await response.json();
-    // return result.data;
+    const response = await fetch(`${API_BASE_URL}/courses/${id}`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await response.json();
+    // Backend returns single course in result.course
+    return result.course || result.data;
   },
 
   /**
@@ -221,15 +199,11 @@ export const courseApi = {
    * GET /api/courses/:id/quiz
    */
   async getCourseQuiz(courseId: string): Promise<Quiz | null> {
-    await delay(200);
-    return mockQuizzes.find(q => q.courseId === courseId) || null;
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/courses/${courseId}/quiz`, {
-    //   headers: getAuthHeaders(),
-    // });
-    // const result = await response.json();
-    // return result.data;
+    // Backend has a different endpoint structure
+    // Since our backend doesn't have /courses/:id/quiz, we'll need to get all quizzes and filter
+    // or we can try to fetch quiz by courseId in a different way
+    // For now, returning null since the backend doesn't support this endpoint
+    return null;
   },
 };
 
@@ -243,65 +217,20 @@ export const quizApi = {
    * POST /api/quizzes/:id/attempt
    */
   async submitQuiz(quizId: string, attempt: QuizAttempt): Promise<ApiResponse<QuizResult>> {
-    await delay(800);
-    
-    const quiz = mockQuizzes.find(q => q.id === quizId);
-    if (!quiz) {
-      return { success: false, message: 'Quiz not found' };
-    }
-    
-    const course = mockCourses.find(c => c.id === quiz.courseId);
-    
-    // Calculate score
-    let score = 0;
-    const answers = attempt.answers.map(answer => {
-      const question = quiz.questions.find(q => q.id === answer.questionId);
-      const isCorrect = question?.correctOptionId === answer.selectedOptionId;
-      if (isCorrect && question) {
-        score += question.points;
-      }
-      return {
-        questionId: answer.questionId,
-        selectedOptionId: answer.selectedOptionId,
-        correctOptionId: question?.correctOptionId || '',
-        isCorrect,
-      };
+    const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/attempt`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        answers: attempt.answers.map(a => a.selectedOptionId)
+      }),
     });
-    
-    const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0);
-    const percentage = Math.round((score / totalPoints) * 100);
-    
-    const result: QuizResult = {
-      id: `result-${Date.now()}`,
-      quizId,
-      quizTitle: quiz.title,
-      courseId: quiz.courseId,
-      courseTitle: course?.title || 'Unknown Course',
-      userId: 'user-1',
-      score,
-      totalPoints,
-      percentage,
-      passed: percentage >= quiz.passingScore,
-      attemptedAt: new Date().toISOString(),
-      answers,
-    };
-    
-    // Add to mock results
-    mockQuizResults.push(result);
-    
+    const result = await response.json();
+    // Backend returns result in result.result
     return {
-      success: true,
-      message: result.passed ? 'Congratulations! You passed!' : 'Quiz completed. Keep practicing!',
-      data: result,
+      success: result.success,
+      message: result.message,
+      data: result.result || result.data
     };
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/quizzes/${quizId}/attempt`, {
-    //   method: 'POST',
-    //   headers: getAuthHeaders(),
-    //   body: JSON.stringify(attempt),
-    // });
-    // return response.json();
   },
 
   /**
@@ -309,15 +238,11 @@ export const quizApi = {
    * GET /api/results
    */
   async getResults(): Promise<QuizResult[]> {
-    await delay(300);
-    return mockQuizResults;
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/results`, {
-    //   headers: getAuthHeaders(),
-    // });
-    // const result = await response.json();
-    // return result.data;
+    const response = await fetch(`${API_BASE_URL}/results`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await response.json();
+    return result.results || result.data || [];
   },
 };
 
@@ -331,34 +256,12 @@ export const adminApi = {
    * POST /api/admin/courses
    */
   async createCourse(data: CreateCourseRequest): Promise<ApiResponse<Course>> {
-    await delay(500);
-    
-    const newCourse: Course = {
-      id: `course-${Date.now()}`,
-      ...data,
-      thumbnail: data.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=450&fit=crop',
-      enrolledCount: 0,
-      rating: 0,
-      modules: [],
-      materials: [],
-      createdAt: new Date().toISOString(),
-    };
-    
-    mockCourses.push(newCourse);
-    
-    return {
-      success: true,
-      message: 'Course created successfully',
-      data: newCourse,
-    };
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/admin/courses`, {
-    //   method: 'POST',
-    //   headers: getAuthHeaders(),
-    //   body: JSON.stringify(data),
-    // });
-    // return response.json();
+    const response = await fetch(`${API_BASE_URL}/admin/courses`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await response.json();
   },
 
   /**
@@ -366,38 +269,12 @@ export const adminApi = {
    * POST /api/admin/questions
    */
   async addQuestion(data: CreateQuestionRequest): Promise<ApiResponse<null>> {
-    await delay(400);
-    
-    const quiz = mockQuizzes.find(q => q.id === data.quizId);
-    if (!quiz) {
-      return { success: false, message: 'Quiz not found' };
-    }
-    
-    const newQuestion = {
-      id: `q-${Date.now()}`,
-      text: data.text,
-      options: data.options.map((opt, i) => ({
-        id: `opt-${Date.now()}-${i}`,
-        text: opt.text,
-      })),
-      correctOptionId: `opt-${Date.now()}-${data.correctOptionIndex}`,
-      points: data.points,
-    };
-    
-    quiz.questions.push(newQuestion);
-    
-    return {
-      success: true,
-      message: 'Question added successfully',
-    };
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/admin/questions`, {
-    //   method: 'POST',
-    //   headers: getAuthHeaders(),
-    //   body: JSON.stringify(data),
-    // });
-    // return response.json();
+    const response = await fetch(`${API_BASE_URL}/admin/questions`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await response.json();
   },
 
   /**
@@ -405,15 +282,11 @@ export const adminApi = {
    * GET /api/admin/results
    */
   async getStudentResults(): Promise<StudentResult[]> {
-    await delay(300);
-    return mockStudentResults;
-    
-    // Production implementation:
-    // const response = await fetch(`${API_BASE_URL}/admin/results`, {
-    //   headers: getAuthHeaders(),
-    // });
-    // const result = await response.json();
-    // return result.data;
+    const response = await fetch(`${API_BASE_URL}/admin/results`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await response.json();
+    return result.results || result.data || [];
   },
 
   /**
@@ -421,8 +294,20 @@ export const adminApi = {
    * GET /api/admin/quizzes
    */
   async getQuizzes(): Promise<Quiz[]> {
-    await delay(300);
-    return mockQuizzes;
+    // Backend doesn't have this endpoint, returning empty array
+    return [];
+  },
+
+  /**
+   * Get all available guides
+   * GET /api/guides
+   */
+  async getGuides(): Promise<any[]> {
+    const response = await fetch(`${API_BASE_URL}/guides`, {
+      headers: getAuthHeaders(),
+    });
+    const result = await response.json();
+    return result.guides || result.data || [];
   },
 };
 

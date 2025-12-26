@@ -169,3 +169,12 @@ export interface StudentResult {
   passed: boolean;
   attemptedAt: string;
 }
+
+// Guide Types
+export interface Guide {
+  id: number;
+  name: string;
+  filename: string;
+  url: string;
+  description: string;
+}

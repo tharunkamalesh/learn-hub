@@ -19,7 +19,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin 
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !localStorage.getItem("token")) {
     return <Navigate to="/auth" replace />;
   }
 
