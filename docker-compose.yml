@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: lms-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: thaxun90!
+      POSTGRES_DB: lms_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lms-network
+
+  backend:
+    image: lms-backend
+    container_name: lms-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+
+    depends_on:
+      - postgres
+    networks:
+      - lms-network
+
+  frontend:
+    image: lms-frontend
+    container_name: lms-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - lms-network
+
+networks:
+  lms-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
