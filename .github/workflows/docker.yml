@@ -1,28 +1,7 @@
-
-name: Docker CI
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: tharunkamalesh/lms-frontend:latest
+- name: Build and push Docker image
+  uses: docker/build-push-action@v5
+  with:
+    context: .
+    file: ./Dockerfile
+    push: false
+    tags: learn-hub:latest
