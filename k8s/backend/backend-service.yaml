@@ -1,12 +1,19 @@
-apiVersion: v1
-kind: Service
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: backend-service
+  name: backend-deployment
 spec:
-  type: NodePort
+  replicas: 1
   selector:
-    app: backend
-  ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 30007
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: tharunkamalesh/crop-backend:latest
+          ports:
+            - containerPort: 5000
