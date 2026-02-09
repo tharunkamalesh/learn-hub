@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lms-backend
+  name: backend-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: lms-backend
+      app: backend
   template:
     metadata:
       labels:
-        app: lms-backend
+        app: backend
     spec:
       containers:
-        - name: lms-backend
-          image: tharunkamalesh/lms-backend:latest
+        - name: backend
+          image: YOUR_DOCKER_USERNAME/lms-backend:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 5000
